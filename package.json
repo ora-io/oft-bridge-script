@@ -3,8 +3,18 @@
   "version": "1.0.0",
   "description": "oft-cc-script",
   "scripts": {
-    "ora-eth-to-base": "npx hardhat run scripts/send_via_oft_adapter.ts --network ethereum",
-    "ora-base-to-eth": "npx hardhat run scripts/send_via_oft.ts --network base"
+    "ora-eth-to-arbitrum": "export PATHWAY='ETHEREUM->ARBITRUM' && npx hardhat run scripts/send_via_oft_adapter.ts --network ethereum",
+    "ora-eth-to-base": "export PATHWAY='ETHEREUM->BASE' && npx hardhat run scripts/send_via_oft_adapter.ts --network ethereum",
+    "ora-eth-to-binance": "export PATHWAY='ETHEREUM->BINANCE' && npx hardhat run scripts/send_via_oft_adapter.ts --network ethereum",
+    "ora-base-to-eth": "export PATHWAY='BASE->ETHEREUM' && npx hardhat run scripts/send_via_oft.ts --network base",
+    "ora-base-to-binance": "export PATHWAY='BASE->BINANCE' && npx hardhat run scripts/send_via_oft.ts --network base",
+    "ora-base-to-arbitrum": "export PATHWAY='BASE->ARBITRUM' && npx hardhat run scripts/send_via_oft.ts --network base",
+    "ora-arbitrum-to-base": "export PATHWAY='ARBITRUM->BASE' && npx hardhat run scripts/send_via_oft.ts --network arbitrum",
+    "ora-arbitrum-to-binance": "export PATHWAY='ARBITRUM->BINANCE' && npx hardhat run scripts/send_via_oft.ts --network arbitrum",
+    "ora-arbitrum-to-eth": "export PATHWAY='ARBITRUM->ETHEREUM' && npx hardhat run scripts/send_via_oft.ts --network arbitrum",
+    "ora-binance-to-base": "export PATHWAY='BINANCE->BASE' && npx hardhat run scripts/send_via_oft.ts --network binance",
+    "ora-binance-to-arbitrum": "export PATHWAY='BINANCE->ARBITRUM' && npx hardhat run scripts/send_via_oft.ts --network binance",
+    "ora-binance-to-eth": "export PATHWAY='BINANCE->ETHEREUM' && npx hardhat run scripts/send_via_oft.ts --network binance"
   },
   "devDependencies": {
     "@ethersproject/bytes": "^5.7.0",

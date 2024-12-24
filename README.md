@@ -72,23 +72,75 @@ Follow these steps to set up the project on your local machine:
 
 Once you've configured the environment variables, you can run the following commands to send OFT tokens across chains:
 
-### Send Tokens to Base Network
+### Sending Tokens Between Networks
 
-To send OFT tokens from the mainnet to the Base network, run the following command:
+#### Ethereum to Other Networks
 
-```bash
-yarn run ora-eth-to-base
-```
+- **To Arbitrum:**
+  ```bash
+  yarn run ora-eth-to-arbitrum
+  ```
 
-This command will send the specified amount of tokens from the mainnet to the receiver address on the Base network.
+- **To Base:**
+  ```bash
+  yarn run ora-eth-to-base
+  ```
 
-### Send Tokens Back to Mainnet
+- **To Binance:**
+  ```bash
+  yarn run ora-eth-to-binance
+  ```
 
-To send OFT tokens back from the Base network to the origin chain (e.g., mainnet), run the following command:
+#### Base to Other Networks
 
-```bash
-yarn run ora-base-to-eth
-```
+- **To Ethereum:**
+  ```bash
+  yarn run ora-base-to-eth
+  ```
+
+- **To Binance:**
+  ```bash
+  yarn run ora-base-to-binance
+  ```
+
+- **To Arbitrum:**
+  ```bash
+  yarn run ora-base-to-arbitrum
+  ```
+
+#### Arbitrum to Other Networks
+
+- **To Base:**
+  ```bash
+  yarn run ora-arbitrum-to-base
+  ```
+
+- **To Binance:**
+  ```bash
+  yarn run ora-arbitrum-to-binance
+  ```
+
+- **To Ethereum:**
+  ```bash
+  yarn run ora-arbitrum-to-eth
+  ```
+
+#### Binance to Other Networks
+
+- **To Base:**
+  ```bash
+  yarn run ora-binance-to-base
+  ```
+
+- **To Arbitrum:**
+  ```bash
+  yarn run ora-binance-to-arbitrum
+  ```
+
+- **To Ethereum:**
+  ```bash
+  yarn run ora-binance-to-eth
+  ```
 
 This command will send the tokens back from the Base network to the mainnet.
 

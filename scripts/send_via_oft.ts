@@ -2,48 +2,78 @@ import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import { zeroPad } from "@ethersproject/bytes";
 import { ethers } from "hardhat";
+import PATHWAY_CONFIG from "./layer0_bridge_data";
 
-const OFT_CONTRACT_NAME = "ORACoinOFT";
+const OFTAdapter_CONTRACT_NAME = "ORACoinOFTAdapter";
 
-// Via the OFT contract, send back the OFT-wrapped tokens on the destination chain (e.g. BNB testnet) to the source chain (e.g. Sepolia)
-async function sendOFTBack(
-    oftAdapterContractAddress: string,
-    oftContractAddress: string,
+const ERC20_TOKEN_APPROVE_ABI = [
+    {
+        inputs: [
+            {
+                internalType: "address",
+                name: "spender",
+                type: "address",
+            },
+            {
+                internalType: "uint256",
+                name: "value",
+                type: "uint256",
+            },
+        ],
+        name: "approve",
+        outputs: [
+            {
+                internalType: "bool",
+                name: "",
+                type: "bool",
+            },
+        ],
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+];
+
+// Via the OFTAdapter contract, send erc20 tokens on the source chain (e.g. Sepolia) to the destination chain (e.g. BNB testnet)
+async function sendOFT(
+    oftContractAddressOnSrcChain: string,
+    oftContractAddressOnRemoteChain: string,
     lzEndpointIdOnSrcChain: string,
     lzEndpointIdOnDestChain: string,
     gasDropInWeiOnDestChain: string,
     executorLzReceiveOptionMaxGas: string,
     sendingAccountPrivKey: string,
     receivingAccountAddress: string,
-    amount: string,
+    amount: string
 ) {
     const sender = new ethers.Wallet(sendingAccountPrivKey, ethers.provider);
 
     console.log(
-        `sendOFTBack - oftAdapterContractAddress:${oftAdapterContractAddress}, oftContractAddress:${oftContractAddress}, lzEndpointIdOnSrcChain:${lzEndpointIdOnSrcChain}, lzEndpointIdOnDestChain:${lzEndpointIdOnDestChain}, gasDropInWeiOnDestChain:${gasDropInWeiOnDestChain}, executorLzReceiveOptionMaxGas:${executorLzReceiveOptionMaxGas}, receivingAccountAddress:${receivingAccountAddress}, sender: ${sender.address}, amount:${amount}`,
+        `sendOFT - oftContractAddressOnSrcChain:${oftContractAddressOnSrcChain}, oftContractAddressOnRemoteChain:${oftContractAddressOnRemoteChain}, lzEndpointIdOnSrcChain:${lzEndpointIdOnSrcChain}, lzEndpointIdOnDestChain:${lzEndpointIdOnDestChain}, gasDropInWeiOnDestChain:${gasDropInWeiOnDestChain}, executorLzReceiveOptionMaxGas:${executorLzReceiveOptionMaxGas}, receivingAccountAddress:${receivingAccountAddress}, sender: ${sender.address}, amount:${amount}`,
     );
 
-    // It is the OFT contract whose send() func is to be called to transfer OFT-wrapped tokens cross-chain
-    const myOFTContract = await ethers.getContractAt(OFT_CONTRACT_NAME, oftContractAddress, sender);
+    // It is the OFTAdapter contract whose send() func is to be called to transfer tokens cross-chain
+    const myOFTAdapterContract = await ethers.getContractAt(
+        OFTAdapter_CONTRACT_NAME,
+        oftContractAddressOnSrcChain,
+        sender,
+    );
 
     const amountInWei = ethers.parseEther(amount);
     const receiverAddressInBytes32 = zeroPad(receivingAccountAddress, 32);
 
-    // Approve step is not needed for sending the OFT-wrapped tokens on destination chain back to the source chain
-
     // Set the required options for cross-chain send
     const options = Options.newOptions()
         // addExecutorNativeDropOption is optional
-        // .addExecutorNativeDropOption(Number(gasDropInWeiOnDestChain), receivingAccountAddress as any)
+        // .addExecutorNativeDropOption(BigInt(gasDropInWeiOnDestChain), receivingAccountAddress as any)
         // Without addExecutorLzReceiveOption, will get execution reverted. Why???
-        .addExecutorLzReceiveOption(Number(200000), 0)
+        .addExecutorLzReceiveOption(BigInt(executorLzReceiveOptionMaxGas), 0)
         .toHex()
         .toString();
 
     // Set the send param
     // https://github.com/LayerZero-Labs/LayerZero-v2/blob/main/oapp/contracts/oft/interfaces/IOFT.sol#L10
     const sendParam = [
-        lzEndpointIdOnSrcChain, // Sepolia
+        lzEndpointIdOnDestChain,
         receiverAddressInBytes32,
         amountInWei,
         amountInWei,
@@ -55,11 +85,11 @@ async function sendOFTBack(
     // Step 1: call the func quoteSend() to estimate cross-chain fee to be paid in native on the source chain
     // https://github.com/LayerZero-Labs/LayerZero-v2/blob/main/oapp/contracts/oft/interfaces/IOFT.sol#L127C60-L127C73
     // false is set for _payInLzToken Flag indicating whether the caller is paying in the LZ token
-    const [nativeFee] = await myOFTContract.quoteSend(sendParam as any, false);
-    console.log("sendOFTBack - estimated nativeFee:", ethers.formatEther(nativeFee));
+    const [nativeFee] = await myOFTAdapterContract.quoteSend(sendParam as any, false);
+    console.log("sendOFT - estimated nativeFee:", ethers.formatEther(nativeFee));
 
     // Step 2: call the func send() to transfer tokens on source chain to destination chain
-    const sendTx = await myOFTContract.send(
+    const sendTx = await myOFTAdapterContract.send(
         sendParam as any,
         [nativeFee, 0] as any, // set 0 for lzTokenFee
         sender.address, // refund address
@@ -67,8 +97,9 @@ async function sendOFTBack(
             value: nativeFee,
         },
     );
+    console.log("tx sent")
     const sendTxReceipt = await sendTx.wait();
-    console.log("sendOFTBack - send tx on source chain:", sendTxReceipt?.hash);
+    console.log("sendOFT - send tx on source chain:", sendTxReceipt?.hash);
 
     // Wait for cross-chain tx finalization by LayerZero
     console.log("Wait for cross-chain tx finalization by LayerZero ...");
@@ -76,15 +107,25 @@ async function sendOFTBack(
         Number(lzEndpointIdOnDestChain),
         sendTxReceipt?.hash as string,
     );
-    console.log("sendOFTBack - received tx on destination chain:", deliveredMsg?.dstTxHash);
+    console.log("sendOFT - received tx on destination chain:", deliveredMsg?.dstTxHash);
 }
 
 async function main() {
+    const { PATHWAY } = process.env;
+    if (!PATHWAY) {
+        throw new Error("Missing PATHWAY");
+    }
+
+    const [srcChain, destChain] = PATHWAY.split("->");
+
     const {
-        oftAdapterContractAddress,
         oftContractAddress,
-        lzEndpointIdOnSrcChain,
-        lzEndpointIdOnDestChain,
+        oftContractAddressOnRemoteChain,
+        lzEndpointIdOnCurrentChain,
+        lzEndpointIdOnRemoteChain
+    } = PATHWAY_CONFIG(srcChain, destChain);
+
+    const {
         gasDropInWeiOnDestChain,
         executorLzReceiveOptionMaxGas,
         SENDER_ACCOUNT_PRIV_KEY,
@@ -93,13 +134,11 @@ async function main() {
     } = process.env;
 
     // Check input params
-    if (!oftAdapterContractAddress) {
-        throw new Error("Missing oftAdapterContractAddress");
-    } else if (!oftContractAddress) {
+    if (!oftContractAddress) {
         throw new Error("Missing oftContractAddress");
-    } else if (!lzEndpointIdOnSrcChain) {
+    } else if (!lzEndpointIdOnCurrentChain) {
         throw new Error("Missing lzEndpointIdOnSrcChain");
-    } else if (!lzEndpointIdOnDestChain) {
+    } else if (!lzEndpointIdOnRemoteChain) {
         throw new Error("Missing lzEndpointIdOnDestChain");
     } else if (!gasDropInWeiOnDestChain) {
         throw new Error("Missing gasDropInWeiOnDestChain");
@@ -113,16 +152,16 @@ async function main() {
         throw new Error("Missing AMOUNT");
     }
 
-    await sendOFTBack(
-        oftAdapterContractAddress,
+    await sendOFT(
         oftContractAddress,
-        lzEndpointIdOnSrcChain,
-        lzEndpointIdOnDestChain,
+        oftContractAddressOnRemoteChain,
+        lzEndpointIdOnCurrentChain,
+        lzEndpointIdOnRemoteChain,
         gasDropInWeiOnDestChain,
         executorLzReceiveOptionMaxGas,
         SENDER_ACCOUNT_PRIV_KEY,
         RECEIVER_ACCOUNT_ADDRESS,
-        SEND_AMOUNT,
+        SEND_AMOUNT
     );
 }
 

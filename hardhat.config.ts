@@ -2,13 +2,14 @@ import "dotenv/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-verify";
 
-const ACCOUNTS = process.env.DEPLOYER_ACCOUNT_PRIV_KEY
-    ? [`${process.env.SENDER_BACK_ACCOUNT_PRIV_KEY}`]
+const ACCOUNTS = process.env.SENDER_ACCOUNT_PRIV_KEY
+    ? [`${process.env.SENDER_ACCOUNT_PRIV_KEY}`]
     : [];
 
 const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL;
 const BASE_RPC_URL = process.env.BASE_RPC_URL;
 const ARBITRUM_RPC_URL = process.env.ARBITRUM_RPC_URL;
+const BSC_MAINNET_RPC_URL = process.env.BSC_MAINNET_RPC_URL;
 
 module.exports = {
     defaultNetwork: "hardhat",
@@ -25,11 +26,6 @@ module.exports = {
         polygon: {
             chainId: 137,
             url: "https://polygon-mainnet.public.blastapi.io", // "https://polygon-pokt.nodies.app",
-            accounts: ACCOUNTS,
-        },
-        sepolia: {
-            chainId: 11155111,
-            url: "https://eth-sepolia.public.blastapi.io",
             accounts: ACCOUNTS,
         },
         ethereum: {
@@ -52,6 +48,11 @@ module.exports = {
             url: ARBITRUM_RPC_URL,
             accounts: ACCOUNTS,
         },
+        binance: {
+            chainId: 56,
+            url: BSC_MAINNET_RPC_URL,
+            accounts: ACCOUNTS,
+        }
     },
     etherscan: {
         customChains: [

@@ -2,6 +2,7 @@ import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import { zeroPad } from "@ethersproject/bytes";
 import { ethers } from "hardhat";
+import PATHWAY_CONFIG from "./layer0_bridge_data";
 
 const OFTAdapter_CONTRACT_NAME = "ORACoinOFTAdapter";
 
@@ -33,9 +34,9 @@ const ERC20_TOKEN_APPROVE_ABI = [
 ];
 
 // Via the OFTAdapter contract, send erc20 tokens on the source chain (e.g. Sepolia) to the destination chain (e.g. BNB testnet)
-async function sendOFT(
-    oftAdapterContractAddress: string,
-    oftContractAddress: string,
+async function sendOFTViaAdapter(
+    oftContractAddressOnSrcChain: string,
+    oftContractAddressOnRemoteChain: string,
     lzEndpointIdOnSrcChain: string,
     lzEndpointIdOnDestChain: string,
     gasDropInWeiOnDestChain: string,
@@ -48,13 +49,13 @@ async function sendOFT(
     const sender = new ethers.Wallet(sendingAccountPrivKey, ethers.provider);
 
     console.log(
-        `sendOFT - oftAdapterContractAddress:${oftAdapterContractAddress}, oftContractAddress:${oftContractAddress}, lzEndpointIdOnSrcChain:${lzEndpointIdOnSrcChain}, lzEndpointIdOnDestChain:${lzEndpointIdOnDestChain}, gasDropInWeiOnDestChain:${gasDropInWeiOnDestChain}, executorLzReceiveOptionMaxGas:${executorLzReceiveOptionMaxGas}, receivingAccountAddress:${receivingAccountAddress}, sender: ${sender.address}, amount:${amount}, erc20TokenAddress:${erc20TokenAddress}`,
+        `sendOFT - oftContractAddressOnSrcChain:${oftContractAddressOnSrcChain}, oftContractAddressOnRemoteChain:${oftContractAddressOnRemoteChain}, lzEndpointIdOnSrcChain:${lzEndpointIdOnSrcChain}, lzEndpointIdOnDestChain:${lzEndpointIdOnDestChain}, gasDropInWeiOnDestChain:${gasDropInWeiOnDestChain}, executorLzReceiveOptionMaxGas:${executorLzReceiveOptionMaxGas}, receivingAccountAddress:${receivingAccountAddress}, sender: ${sender.address}, amount:${amount}, erc20TokenAddress:${erc20TokenAddress}`,
     );
 
     // It is the OFTAdapter contract whose send() func is to be called to transfer tokens cross-chain
     const myOFTAdapterContract = await ethers.getContractAt(
         OFTAdapter_CONTRACT_NAME,
-        oftAdapterContractAddress,
+        oftContractAddressOnSrcChain,
         sender,
     );
 
@@ -68,7 +69,7 @@ async function sendOFT(
     const receiverAddressInBytes32 = zeroPad(receivingAccountAddress, 32);
 
     // Step 1: the sender approves his erc20 tokens for the OFTAdapter contract
-    const approveTx = await erc20TokenContract.approve(oftAdapterContractAddress, amountInWei);
+    const approveTx = await erc20TokenContract.approve(oftContractAddressOnSrcChain, amountInWei);
     const approveTxReceipt = await approveTx.wait();
     console.log("sendOFT - approve tx:", approveTxReceipt?.hash);
 
@@ -122,27 +123,36 @@ async function sendOFT(
 }
 
 async function main() {
+    const { PATHWAY } = process.env;
+    if (!PATHWAY) {
+        throw new Error("Missing PATHWAY");
+    }
+
+    const [srcChain, destChain] = PATHWAY.split("->");
+
     const {
-        oftAdapterContractAddress,
+        tokenContractAddress,
         oftContractAddress,
-        lzEndpointIdOnSrcChain,
-        lzEndpointIdOnDestChain,
+        oftContractAddressOnRemoteChain,
+        lzEndpointIdOnCurrentChain,
+        lzEndpointIdOnRemoteChain
+    } = PATHWAY_CONFIG(srcChain, destChain);
+
+
+    const {
         gasDropInWeiOnDestChain,
         executorLzReceiveOptionMaxGas,
         SENDER_ACCOUNT_PRIV_KEY,
         RECEIVER_ACCOUNT_ADDRESS,
         SEND_AMOUNT,
-        erc20TokenAddress,
     } = process.env;
 
     // Check input params
-    if (!oftAdapterContractAddress) {
-        throw new Error("Missing oftAdapterContractAddress");
-    } else if (!oftContractAddress) {
+    if (!oftContractAddress) {
         throw new Error("Missing oftContractAddress");
-    } else if (!lzEndpointIdOnSrcChain) {
+    } else if (!lzEndpointIdOnCurrentChain) {
         throw new Error("Missing lzEndpointIdOnSrcChain");
-    } else if (!lzEndpointIdOnDestChain) {
+    } else if (!lzEndpointIdOnRemoteChain) {
         throw new Error("Missing lzEndpointIdOnDestChain");
     } else if (!gasDropInWeiOnDestChain) {
         throw new Error("Missing gasDropInWeiOnDestChain");
@@ -154,21 +164,21 @@ async function main() {
         throw new Error("Missing RECEIVER_ACCOUNT_ADDRESS");
     } else if (!SEND_AMOUNT) {
         throw new Error("Missing AMOUNT");
-    } else if (!erc20TokenAddress) {
-        throw new Error("Missing erc20TokenAddress");
+    } else if (!tokenContractAddress) {
+        throw new Error("Missing tokenContractAddress");
     }
 
-    await sendOFT(
-        oftAdapterContractAddress,
+    await sendOFTViaAdapter(
         oftContractAddress,
-        lzEndpointIdOnSrcChain,
-        lzEndpointIdOnDestChain,
+        oftContractAddressOnRemoteChain,
+        lzEndpointIdOnCurrentChain,
+        lzEndpointIdOnRemoteChain,
         gasDropInWeiOnDestChain,
         executorLzReceiveOptionMaxGas,
         SENDER_ACCOUNT_PRIV_KEY,
         RECEIVER_ACCOUNT_ADDRESS,
         SEND_AMOUNT,
-        erc20TokenAddress,
+        tokenContractAddress
     );
 }
 
