@@ -76,11 +76,14 @@ async function sendOFTViaAdapter(
     console.log("sendOFT - approve tx:", approveTxReceipt?.hash);
 
     // Set the required options for cross-chain send
+    let computeUnits = 200000;
+    let lamports = 2500000;
+    // Set the required options for cross-chain send
     const options = Options.newOptions()
         // addExecutorNativeDropOption is optional
         // .addExecutorNativeDropOption(BigInt(gasDropInWeiOnDestChain), receivingAccountAddress as any)
         // Without addExecutorLzReceiveOption, will get execution reverted. Why???
-        .addExecutorLzReceiveOption(BigInt(executorLzReceiveOptionMaxGas), 0)
+        .addExecutorLzReceiveOption(BigInt(computeUnits), lamports)
         .toHex()
         .toString();
 
