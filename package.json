@@ -6,6 +6,7 @@
     "ora-eth-to-arbitrum": "export PATHWAY='ETHEREUM->ARBITRUM' && npx hardhat run scripts/send_via_oft_adapter.ts --network ethereum",
     "ora-eth-to-base": "export PATHWAY='ETHEREUM->BASE' && npx hardhat run scripts/send_via_oft_adapter.ts --network ethereum",
     "ora-eth-to-binance": "export PATHWAY='ETHEREUM->BINANCE' && npx hardhat run scripts/send_via_oft_adapter.ts --network ethereum",
+    "ora-eth-to-solana": "export PATHWAY='ETHEREUM->SOLANA' && npx hardhat run scripts/send_via_oft_adapter_sol.ts --network ethereum",
     "ora-base-to-eth": "export PATHWAY='BASE->ETHEREUM' && npx hardhat run scripts/send_via_oft.ts --network base",
     "ora-base-to-binance": "export PATHWAY='BASE->BINANCE' && npx hardhat run scripts/send_via_oft.ts --network base",
     "ora-base-to-arbitrum": "export PATHWAY='BASE->ARBITRUM' && npx hardhat run scripts/send_via_oft.ts --network base",
@@ -50,6 +51,7 @@
     "@layerzerolabs/scan-client": "^0.0.8",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.9",
     "@openzeppelin/contracts": "^5.0.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "bs58": "6.0.0"
   }
 }
