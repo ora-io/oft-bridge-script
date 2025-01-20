@@ -18,7 +18,8 @@
     "ora-binance-to-base": "export PATHWAY='BINANCE->BASE' && npx hardhat run scripts/send_via_oft.ts --network binance",
     "ora-binance-to-arbitrum": "export PATHWAY='BINANCE->ARBITRUM' && npx hardhat run scripts/send_via_oft.ts --network binance",
     "ora-binance-to-eth": "export PATHWAY='BINANCE->ETHEREUM' && npx hardhat run scripts/send_via_oft.ts --network binance",
-    "ora-binance-to-solana": "export PATHWAY='BINANCE->SOLANA' && npx hardhat run scripts/send_via_oft_sol.ts --network binance"
+    "ora-binance-to-solana": "export PATHWAY='BINANCE->SOLANA' && npx hardhat run scripts/send_via_oft_sol.ts --network binance",
+    "zai-base-to-solana": "export PATHWAY='BASE->SOLANA' && npx hardhat run scripts/send_via_oft_adapter_sol.ts --network base"
   },
   "devDependencies": {
     "@ethersproject/bytes": "^5.7.0",
