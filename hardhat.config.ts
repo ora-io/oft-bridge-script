@@ -10,6 +10,7 @@ const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL;
 const BASE_RPC_URL = process.env.BASE_RPC_URL;
 const ARBITRUM_RPC_URL = process.env.ARBITRUM_RPC_URL;
 const BSC_MAINNET_RPC_URL = process.env.BSC_MAINNET_RPC_URL;
+const UNICHAIN_RPC_URL = process.env.UNICHAIN_RPC_URL;
 
 module.exports = {
     defaultNetwork: "hardhat",
@@ -52,6 +53,11 @@ module.exports = {
             chainId: 56,
             url: BSC_MAINNET_RPC_URL,
             accounts: ACCOUNTS,
+        },
+        unichain: {
+            chianId: 130,
+            url: UNICHAIN_RPC_URL,
+            accounts: ACCOUNTS
         }
     },
     etherscan: {

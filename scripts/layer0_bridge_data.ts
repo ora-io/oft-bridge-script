@@ -19,6 +19,10 @@ const CHAIN_CONFIG: any = {
     SOLANA: {
         oftContractAddress: "BVf9xuRTRLmb8DjfaxDgPuGBdy9qTnspLwYpDpfdUoAY",
         lzEndpointIdOnCurrentChain: 30168
+    },
+    UNICHAIN: {
+        oftContractAddress: "0x2d1b035CA47E04A119dff0FAC828f4a57A67E4dE",
+        lzEndpointIdOnCurrentChain: 30320,
     }
 };
 
